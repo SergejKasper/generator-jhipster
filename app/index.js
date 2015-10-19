@@ -924,6 +924,9 @@ JhipsterGenerator.prototype.app = function app() {
     this.template(webappDir + '/scripts/components/auth/services/_register.service.js', webappDir + 'scripts/components/auth/services/register.service.js', this, {});
     if (this.authenticationType == 'session') {
         this.template(webappDir + '/scripts/components/auth/services/_sessions.service.js', webappDir + 'scripts/components/auth/services/sessions.service.js', this, {});
+        this.template(webappDir + '/scripts/components/login-popup/_login-popup.controller.js', webappDir + 'scripts/components/login-popup/login-popup.controller.js', this, {});
+        this.template(webappDir + '/scripts/components/login-popup/_login-popup.service.js', webappDir + 'scripts/components/login-popup/login-popup.service.js', this, {});
+        this.copyHtml(webappDir + '/scripts/components/login-popup/login-popup.html', webappDir + 'scripts/components/login-popup/login-popup.html');
     }
     this.template(webappDir + '/scripts/components/form/_form.directive.js', webappDir + 'scripts/components/form/form.directive.js', this, {});
     this.template(webappDir + '/scripts/components/form/_maxbytes.directive.js', webappDir + 'scripts/components/form/maxbytes.directive.js', this, {});
@@ -939,6 +942,7 @@ JhipsterGenerator.prototype.app = function app() {
     this.template(webappDir + '/scripts/components/navbar/_navbar.directive.js', webappDir + 'scripts/components/navbar/navbar.directive.js', this, {});
     this.copyHtml(webappDir + '/scripts/components/navbar/navbar.html', webappDir + 'scripts/components/navbar/navbar.html');
     this.template(webappDir + '/scripts/components/navbar/_navbar.controller.js', webappDir + 'scripts/components/navbar/navbar.controller.js', this, {});
+    this.copyHtml(webappDir + '/scripts/components/login/login.html', webappDir + 'scripts/components/login/login.html');
     this.template(webappDir + '/scripts/components/user/_user.service.js', webappDir + 'scripts/components/user/user.service.js', this, {});
     this.template(webappDir + '/scripts/components/util/_base64.service.js', webappDir + 'scripts/components/util/base64.service.js', this, {});
     this.template(webappDir + '/scripts/components/util/_capitalize.filter.js', webappDir + 'scripts/components/util/capitalize.filter.js', this, {});
@@ -1171,7 +1175,9 @@ JhipsterGenerator.prototype.app = function app() {
             'scripts/components/auth/services/sessions.service.js',
             'scripts/components/auth/provider/auth.session.service.js',
             'scripts/app/account/sessions/sessions.js',
-            'scripts/app/account/sessions/sessions.controller.js']);
+            'scripts/app/account/sessions/sessions.controller.js',
+            'scripts/components/login-popup/login-popup.controller.js',
+            'scripts/components/login-popup/login-popup.service.js']);
     }
 
     if (this.websocket == 'spring-websocket') {
