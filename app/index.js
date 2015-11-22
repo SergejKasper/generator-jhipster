@@ -43,6 +43,7 @@ JhipsterGenerator.prototype.askFor = function askFor() {
     var insight = this.insight();
     this.javaVersion = '8'; // Java version is forced to be 1.8. We keep the variable as it might be useful in the future.
     var questions = 15; // making questions a variable to avoid updating each question by hand when adding additional options
+    var defaultAppBaseName = (/^[a-zA-Z0-9_]+$/.test(path.basename(process.cwd())))?path.basename(process.cwd()):'jhipster';
 
     var prompts = [
         {
@@ -62,7 +63,7 @@ JhipsterGenerator.prototype.askFor = function askFor() {
                 return 'Your application name cannot contain special characters or a blank space, using the default name instead';
             },
             message: '(1/' + questions + ') What is the base name of your application?',
-            default: 'jhipster'
+            default: defaultAppBaseName
         },
         {
             type: 'input',
@@ -241,6 +242,9 @@ JhipsterGenerator.prototype.askFor = function askFor() {
             default: 1
         },
         {
+            when: function (response) {
+                return response.databaseType == 'sql';
+            },
             type: 'list',
             name: 'searchEngine',
             message: '(8/' + questions + ') Do you want to use a search engine in your application?',
@@ -339,6 +343,7 @@ JhipsterGenerator.prototype.askFor = function askFor() {
           choices: [
                     {name: 'Gatling', value: 'gatling'},
                     {name: 'Cucumber', value: 'cucumber'}
+                    //{name: 'Protractor', value: 'protractor'}
           ],
           default: [ 'gatling' ]
         }
@@ -561,6 +566,10 @@ JhipsterGenerator.prototype.app = function app() {
             break;
         case 'maven':
         default :
+            this.copy('mvnw', 'mvnw');
+            this.copy('mvnw.cmd', 'mvnw.cmd');
+            this.copy('.mvn/wrapper/maven-wrapper.jar', '.mvn/wrapper/maven-wrapper.jar');
+            this.copy('.mvn/wrapper/maven-wrapper.properties', '.mvn/wrapper/maven-wrapper.properties');
             this.template('_pom.xml', 'pom.xml', null, {'interpolate': interpolateRegex});
     }
 
@@ -685,14 +694,11 @@ JhipsterGenerator.prototype.app = function app() {
     this.template('src/main/java/package/config/locale/_package-info.java', javaDir + 'config/locale/package-info.java', this, {});
     this.template('src/main/java/package/config/locale/_AngularCookieLocaleResolver.java', javaDir + 'config/locale/AngularCookieLocaleResolver.java', this, {});
 
-    this.template('src/main/java/package/config/metrics/_package-info.java', javaDir + 'config/metrics/package-info.java', this, {});
     if (this.databaseType == 'cassandra') {
+        this.template('src/main/java/package/config/metrics/_package-info.java', javaDir + 'config/metrics/package-info.java', this, {});
+        this.template('src/main/java/package/config/metrics/_JHipsterHealthIndicatorConfiguration.java', javaDir + 'config/metrics/JHipsterHealthIndicatorConfiguration.java', this, {});
         this.template('src/main/java/package/config/metrics/_CassandraHealthIndicator.java', javaDir + 'config/metrics/CassandraHealthIndicator.java', this, {});
     }
-    if (this.databaseType == 'sql' || this.databaseType == 'mongodb') {
-        this.template('src/main/java/package/config/metrics/_DatabaseHealthIndicator.java', javaDir + 'config/metrics/DatabaseHealthIndicator.java', this, {});
-    }
-    this.template('src/main/java/package/config/metrics/_JHipsterHealthIndicatorConfiguration.java', javaDir + 'config/metrics/JHipsterHealthIndicatorConfiguration.java', this, {});
 
     if (this.hibernateCache == "hazelcast") {
         this.template('src/main/java/package/config/hazelcast/_HazelcastCacheRegionFactory.java', javaDir + 'config/hazelcast/HazelcastCacheRegionFactory.java', this, {});
@@ -726,6 +732,7 @@ JhipsterGenerator.prototype.app = function app() {
     }
 
     if (this.searchEngine == 'elasticsearch') {
+        this.template('src/main/java/package/config/_ElasticSearchConfiguration.java', javaDir + 'config/ElasticSearchConfiguration.java', this, {});
         this.template('src/main/java/package/repository/search/_package-info.java', javaDir + 'repository/search/package-info.java', this, {});
         this.template('src/main/java/package/repository/search/_UserSearchRepository.java', javaDir + 'repository/search/UserSearchRepository.java', this, {});
     }
@@ -762,7 +769,6 @@ JhipsterGenerator.prototype.app = function app() {
     if (this.databaseType == 'sql' || this.databaseType == 'mongodb') {
         this.template('src/main/java/package/security/_SpringSecurityAuditorAware.java', javaDir + 'security/SpringSecurityAuditorAware.java', this, {});
     }
-    this.template('src/main/java/package/security/_CustomUserDetails.java', javaDir + 'security/CustomUserDetails.java', this, {});
     this.template('src/main/java/package/security/_UserDetailsService.java', javaDir + 'security/UserDetailsService.java', this, {});
     this.template('src/main/java/package/security/_UserNotActivatedException.java', javaDir + 'security/UserNotActivatedException.java', this, {});
 
@@ -831,19 +837,19 @@ JhipsterGenerator.prototype.app = function app() {
     mkdirp(testDir);
 
     if (this.databaseType == "cassandra") {
-        this.template('src/test/java/package/_CassandraKeyspaceTest.java', testDir + 'CassandraKeyspaceTest.java', this, {});
+        this.template('src/test/java/package/_CassandraKeyspaceUnitTest.java', testDir + 'CassandraKeyspaceUnitTest.java', this, {});
         this.template('src/test/java/package/_AbstractCassandraTest.java', testDir + 'AbstractCassandraTest.java', this, {});
     }
-    this.template('src/test/java/package/security/_SecurityUtilsTest.java', testDir + 'security/SecurityUtilsTest.java', this, {});
+    this.template('src/test/java/package/security/_SecurityUtilsUnitTest.java', testDir + 'security/SecurityUtilsUnitTest.java', this, {});
     if (this.databaseType == "sql" || this.databaseType == "mongodb") {
-        this.template('src/test/java/package/service/_UserServiceTest.java', testDir + 'service/UserServiceTest.java', this, {});
+        this.template('src/test/java/package/service/_UserServiceIntTest.java', testDir + 'service/UserServiceIntTest.java', this, {});
     }
-    this.template('src/test/java/package/web/rest/_AccountResourceTest.java', testDir + 'web/rest/AccountResourceTest.java', this, {});
+    this.template('src/test/java/package/web/rest/_AccountResourceIntTest.java', testDir + 'web/rest/AccountResourceIntTest.java', this, {});
     if (this.databaseType == 'sql' || this.databaseType == 'mongodb') {
-        this.template('src/test/java/package/web/rest/_AuditResourceTest.java', testDir + 'web/rest/AuditResourceTest.java', this, {});
+        this.template('src/test/java/package/web/rest/_AuditResourceIntTest.java', testDir + 'web/rest/AuditResourceIntTest.java', this, {});
     }
     this.template('src/test/java/package/web/rest/_TestUtil.java', testDir + 'web/rest/TestUtil.java', this, {});
-    this.template('src/test/java/package/web/rest/_UserResourceTest.java', testDir + 'web/rest/UserResourceTest.java', this, {});
+    this.template('src/test/java/package/web/rest/_UserResourceIntTest.java', testDir + 'web/rest/UserResourceIntTest.java', this, {});
 
     this.template(testResourceDir + 'config/_application.yml', testResourceDir + 'config/application.yml', this, {});
     this.template(testResourceDir + '_logback-test.xml', testResourceDir + 'logback-test.xml', this, {});
@@ -853,8 +859,8 @@ JhipsterGenerator.prototype.app = function app() {
     }
 
     if (this.enableSocialSignIn) {
-        this.template('src/test/java/package/repository/_CustomSocialUsersConnectionRepositoryTest.java', testDir + 'repository/CustomSocialUsersConnectionRepositoryTest.java', this, {});
-        this.template('src/test/java/package/service/_SocialServiceTest.java', testDir + 'service/SocialServiceTest.java', this, {});
+        this.template('src/test/java/package/repository/_CustomSocialUsersConnectionRepositoryIntTest.java', testDir + 'repository/CustomSocialUsersConnectionRepositoryIntTest.java', this, {});
+        this.template('src/test/java/package/service/_SocialServiceIntTest.java', testDir + 'service/SocialServiceIntTest.java', this, {});
     }
 
     // Create Gatling test files
@@ -949,6 +955,7 @@ JhipsterGenerator.prototype.app = function app() {
     this.template(webappDir + '/scripts/components/util/_parse-links.service.js', webappDir + 'scripts/components/util/parse-links.service.js', this, {});
     this.template(webappDir + '/scripts/components/util/_truncate.filter.js', webappDir + 'scripts/components/util/truncate.filter.js', this, {});
     this.template(webappDir + '/scripts/components/util/_dateutil.service.js', webappDir + 'scripts/components/util/dateutil.service.js', this, {});
+    this.template(webappDir + '/scripts/components/util/_data-util.service.js', webappDir + 'scripts/components/util/data-util.service.js', this, {});
 
     // Client App
     this.template(webappDir + '/scripts/app/account/_account.js', webappDir + 'scripts/app/account/account.js', this, {});
@@ -1009,9 +1016,11 @@ JhipsterGenerator.prototype.app = function app() {
     }
     this.copyHtml(webappDir + '/scripts/app/admin/user-management/user-management.html', webappDir + 'scripts/app/admin/user-management/user-management.html');
     this.copyHtml(webappDir + '/scripts/app/admin/user-management/_user-management-detail.html', webappDir + 'scripts/app/admin/user-management/user-management-detail.html');
+    this.copyHtml(webappDir + '/scripts/app/admin/user-management/_user-management-dialog.html', webappDir + 'scripts/app/admin/user-management/user-management-dialog.html');
     this.copyJs(webappDir + '/scripts/app/admin/user-management/_user-management.js', webappDir + 'scripts/app/admin/user-management/user-management.js', this, {});
     this.template(webappDir + '/scripts/app/admin/user-management/_user-management.controller.js', webappDir + 'scripts/app/admin/user-management/user-management.controller.js', this, {});
     this.template(webappDir + '/scripts/app/admin/user-management/_user-management-detail.controller.js', webappDir + 'scripts/app/admin/user-management/user-management-detail.controller.js', this, {});
+    this.template(webappDir + '/scripts/app/admin/user-management/_user-management-dialog.controller.js', webappDir + 'scripts/app/admin/user-management/user-management-dialog.controller.js', this, {});
     this.copyHtml(webappDir + '/scripts/app/error/error.html', webappDir + 'scripts/app/error/error.html');
     this.copyHtml(webappDir + '/scripts/app/error/accessdenied.html', webappDir + 'scripts/app/error/accessdenied.html');
     this.copyJs(webappDir + '/scripts/app/entities/_entity.js', webappDir + 'scripts/app/entities/entity.js', this, {});
@@ -1064,6 +1073,12 @@ JhipsterGenerator.prototype.app = function app() {
     if (this.authenticationType == 'session') {
         testTemplates.push('spec/app/account/sessions/_sessions.controller.spec.js');
     }
+    // Create Protractor test files
+    if (this.testFrameworks.indexOf('protractor') != -1) {
+        testTemplates.push('e2e/_account.js');
+        testTemplates.push('e2e/_administration.js');
+        testTemplates.push('_protractor.conf.js')
+    }
     testTemplates.map(function(testTemplatePath) {
         this.template(testJsDir + testTemplatePath, testJsDir + testTemplatePath.replace(/_/,''), this, {});
     }.bind(this));
@@ -1108,6 +1123,7 @@ JhipsterGenerator.prototype.app = function app() {
         'scripts/components/alert/alert.directive.js',
         'scripts/components/util/parse-links.service.js',
         'scripts/components/util/dateutil.service.js',
+        'scripts/components/util/data-util.service.js',
         'scripts/app/account/account.js',
         'scripts/app/account/activate/activate.js',
         'scripts/app/account/activate/activate.controller.js',
@@ -1139,6 +1155,7 @@ JhipsterGenerator.prototype.app = function app() {
         'scripts/app/admin/metrics/metrics.controller.js',
         'scripts/app/admin/metrics/metrics.modal.controller.js',
         'scripts/app/admin/user-management/user-management-detail.controller.js',
+        'scripts/app/admin/user-management/user-management-dialog.controller.js',
         'scripts/app/admin/user-management/user-management.controller.js',
         'scripts/app/admin/user-management/user-management.js',
         'scripts/app/entities/entity.js',
@@ -1193,7 +1210,11 @@ JhipsterGenerator.prototype.app = function app() {
     // Remove old files, from previous JHipster versions
     removefile(javaDir + 'config/MailConfiguration.java');
     removefile(javaDir + 'config/metrics/JavaMailHealthIndicator.java');
+    if (this.databaseType == 'sql' || this.databaseType == 'mongodb') {
+        removefolder(javaDir + 'config/metrics');
+    }
 
+    removefile(javaDir + 'security/_CustomUserDetails.java');
     removefile(javaDir + 'domain/util/CustomLocalDateSerializer.java');
     removefile(javaDir + 'domain/util/CustomDateTimeSerializer.java');
     removefile(javaDir + 'domain/util/CustomDateTimeDeserializer.java');
