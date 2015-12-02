@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('<%=angularAppName%>')
-    .controller('LoginPopupController', function ($rootScope, $scope, $state, $timeout, Auth, $modalInstance) {
+    .controller('LoginPopupController', function ($rootScope, $scope, $state, $timeout, Auth, $uibModalInstance) {
         $scope.credentials = {
             username: null,
             password: null,
@@ -19,7 +19,7 @@ angular.module('<%=angularAppName%>')
                 rememberMe: $scope.credentials.rememberMe
             }).then(function () {
                 $scope.authenticationError = false;
-                $modalInstance.close();
+                $uibModalInstance.close();
             }).catch(function () {
                 $scope.authenticationError = true;
             });
@@ -32,6 +32,6 @@ angular.module('<%=angularAppName%>')
               rememberMe: true
           };
           $scope.authenticationError = false;
-          $modalInstance.dismiss('cancel');
+          $uibModalInstance.dismiss('cancel');
         };
     });
