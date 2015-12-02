@@ -86,7 +86,7 @@ JhipsterGenerator.prototype.askFor = function askFor() {
                 },
                 {
                     value: 'session-social',
-                    name: 'HTTP Session Authentication with social login enabled (Google, Facebook, Twitter). Warning, this only works with SQL databases!'
+                    name: 'HTTP Session Authentication with social login enabled (Google, Facebook, Twitter). Warning, this doesn\'t work with Cassandra!'
                 },
                 {
                     value: 'oauth2',
@@ -101,11 +101,26 @@ JhipsterGenerator.prototype.askFor = function askFor() {
         },
         {
             when: function (response) {
-                if (response.authenticationType == 'session-social') {
-                    response.databaseType = 'sql';
-                    return false;
+                return response.authenticationType == 'session-social';
+            },
+            type: 'list',
+            name: 'databaseType',
+            message: '(4/' + questions + ') Which *type* of database would you like to use?',
+            choices: [
+                {
+                    value: 'sql',
+                    name: 'SQL (H2, MySQL, PostgreSQL, Oracle)'
+                },
+                {
+                    value: 'mongodb',
+                    name: 'MongoDB'
                 }
-                return true;
+            ],
+            default: 0
+        },
+        {
+            when: function (response) {
+                return response.authenticationType != 'session-social';
             },
             type: 'list',
             name: 'databaseType',
@@ -342,8 +357,8 @@ JhipsterGenerator.prototype.askFor = function askFor() {
           message: '(15/' + questions + ') Which testing frameworks would you like to use?',
           choices: [
                     {name: 'Gatling', value: 'gatling'},
-                    {name: 'Cucumber', value: 'cucumber'}
-                    //{name: 'Protractor', value: 'protractor'}
+                    {name: 'Cucumber', value: 'cucumber'},
+                    {name: 'Protractor', value: 'protractor'}
           ],
           default: [ 'gatling' ]
         }
@@ -531,6 +546,8 @@ JhipsterGenerator.prototype.app = function app() {
     }
     if (this.devDatabaseType == "cassandra") {
         this.template('_Dockerfile_cassandra', 'Dockerfile', this, {});
+        this.template('docker/cassandra/_cassandra.sh', 'docker/cassandra/cassandra.sh', this, {});
+        this.template('docker/opscenter/_Dockerfile', 'docker/opscenter/Dockerfile', this, {});
     }
 
     switch (this.frontendBuilder) {
@@ -605,6 +622,7 @@ JhipsterGenerator.prototype.app = function app() {
         this.copy(resourceDir + '/config/mongeez/authorities.xml', resourceDir + 'config/mongeez/authorities.xml');
         this.copy(resourceDir + '/config/mongeez/master.xml', resourceDir + 'config/mongeez/master.xml');
         this.copy(resourceDir + '/config/mongeez/users.xml', resourceDir + 'config/mongeez/users.xml');
+        this.copy(resourceDir + '/config/mongeez/social_user_connections.xml', resourceDir + 'config/mongeez/social_user_connections.xml');
     }
 
     if (this.databaseType == "cassandra") {
@@ -616,6 +634,7 @@ JhipsterGenerator.prototype.app = function app() {
 
     // Create mail templates
     this.copy(resourceDir + '/mails/activationEmail.html', resourceDir + 'mails/activationEmail.html');
+    this.copy(resourceDir + '/mails/creationEmail.html', resourceDir + 'mails/creationEmail.html');
     this.copy(resourceDir + '/mails/passwordResetEmail.html', resourceDir + 'mails/passwordResetEmail.html');
     if (this.enableSocialSignIn) {
         this.copy(resourceDir + '/mails/socialRegistrationValidationEmail.html', resourceDir + 'mails/socialRegistrationValidationEmail.html');
@@ -884,9 +903,10 @@ JhipsterGenerator.prototype.app = function app() {
     // normal CSS or SCSS?
     if (this.useSass) {
         this.template('src/main/scss/main.scss', 'src/main/scss/main.scss');
-    } else {
-        this.template('src/main/webapp/assets/styles/main.css', 'src/main/webapp/assets/styles/main.css');
     }
+    // this css file will be overwritten by the sass generated css if sass is enabled
+    // but this will avoid errors when running app without running sass task first
+    this.template('src/main/webapp/assets/styles/main.css', 'src/main/webapp/assets/styles/main.css');
 
     // HTML5 BoilerPlate
     this.copy(webappDir + 'favicon.ico', webappDir + 'favicon.ico');
@@ -937,10 +957,8 @@ JhipsterGenerator.prototype.app = function app() {
     this.template(webappDir + '/scripts/components/form/_form.directive.js', webappDir + 'scripts/components/form/form.directive.js', this, {});
     this.template(webappDir + '/scripts/components/form/_maxbytes.directive.js', webappDir + 'scripts/components/form/maxbytes.directive.js', this, {});
     this.template(webappDir + '/scripts/components/form/_minbytes.directive.js', webappDir + 'scripts/components/form/minbytes.directive.js', this, {});
-    this.template(webappDir + '/scripts/components/form/_pager.directive.js', webappDir + 'scripts/components/form/pager.directive.js', this, {});
-    this.template(webappDir + '/scripts/components/form/_pager.html', webappDir + 'scripts/components/form/pager.html', this, {});
-    this.template(webappDir + '/scripts/components/form/_pagination.directive.js', webappDir + 'scripts/components/form/pagination.directive.js', this, {});
-    this.template(webappDir + '/scripts/components/form/_pagination.html', webappDir + 'scripts/components/form/pagination.html', this, {});
+    this.template(webappDir + '/scripts/components/form/_uib-pager.config.js', webappDir + 'scripts/components/form/uib-pager.config.js', this, {});
+    this.template(webappDir + '/scripts/components/form/_uib-pagination.config.js', webappDir + 'scripts/components/form/uib-pagination.config.js', this, {});
     if (this.enableTranslation) {
         this.template(webappDir + '/scripts/components/language/_language.controller.js', webappDir + 'scripts/components/language/language.controller.js', this, {});
         this.template(webappDir + '/scripts/components/language/_language.service.js', webappDir + 'scripts/components/language/language.service.js', this, {});
@@ -956,6 +974,7 @@ JhipsterGenerator.prototype.app = function app() {
     this.template(webappDir + '/scripts/components/util/_truncate.filter.js', webappDir + 'scripts/components/util/truncate.filter.js', this, {});
     this.template(webappDir + '/scripts/components/util/_dateutil.service.js', webappDir + 'scripts/components/util/dateutil.service.js', this, {});
     this.template(webappDir + '/scripts/components/util/_data-util.service.js', webappDir + 'scripts/components/util/data-util.service.js', this, {});
+    this.template(webappDir + '/scripts/components/util/_sort.directive.js', webappDir + 'scripts/components/util/sort.directive.js', this, {});
 
     // Client App
     this.template(webappDir + '/scripts/app/account/_account.js', webappDir + 'scripts/app/account/account.js', this, {});
@@ -1017,10 +1036,12 @@ JhipsterGenerator.prototype.app = function app() {
     this.copyHtml(webappDir + '/scripts/app/admin/user-management/user-management.html', webappDir + 'scripts/app/admin/user-management/user-management.html');
     this.copyHtml(webappDir + '/scripts/app/admin/user-management/_user-management-detail.html', webappDir + 'scripts/app/admin/user-management/user-management-detail.html');
     this.copyHtml(webappDir + '/scripts/app/admin/user-management/_user-management-dialog.html', webappDir + 'scripts/app/admin/user-management/user-management-dialog.html');
+    this.copyHtml(webappDir + '/scripts/app/admin/user-management/_user-management-delete-dialog.html', webappDir + 'scripts/app/admin/user-management/user-management-delete-dialog.html');
     this.copyJs(webappDir + '/scripts/app/admin/user-management/_user-management.js', webappDir + 'scripts/app/admin/user-management/user-management.js', this, {});
     this.template(webappDir + '/scripts/app/admin/user-management/_user-management.controller.js', webappDir + 'scripts/app/admin/user-management/user-management.controller.js', this, {});
     this.template(webappDir + '/scripts/app/admin/user-management/_user-management-detail.controller.js', webappDir + 'scripts/app/admin/user-management/user-management-detail.controller.js', this, {});
     this.template(webappDir + '/scripts/app/admin/user-management/_user-management-dialog.controller.js', webappDir + 'scripts/app/admin/user-management/user-management-dialog.controller.js', this, {});
+    this.template(webappDir + '/scripts/app/admin/user-management/_user-management-delete-dialog.controller.js', webappDir + 'scripts/app/admin/user-management/user-management-delete-dialog.controller.js', this, {});
     this.copyHtml(webappDir + '/scripts/app/error/error.html', webappDir + 'scripts/app/error/error.html');
     this.copyHtml(webappDir + '/scripts/app/error/accessdenied.html', webappDir + 'scripts/app/error/accessdenied.html');
     this.copyJs(webappDir + '/scripts/app/entities/_entity.js', webappDir + 'scripts/app/entities/entity.js', this, {});
@@ -1104,8 +1125,8 @@ JhipsterGenerator.prototype.app = function app() {
         'scripts/components/form/form.directive.js',
         'scripts/components/form/maxbytes.directive.js',
         'scripts/components/form/minbytes.directive.js',
-        'scripts/components/form/pager.directive.js',
-        'scripts/components/form/pagination.directive.js',
+        'scripts/components/form/uib-pager.config.js',
+        'scripts/components/form/uib-pagination.config.js',
         'scripts/components/admin/audits.service.js',
         'scripts/components/admin/logs.service.js',
         'scripts/components/admin/configuration.service.js',
@@ -1124,6 +1145,7 @@ JhipsterGenerator.prototype.app = function app() {
         'scripts/components/util/parse-links.service.js',
         'scripts/components/util/dateutil.service.js',
         'scripts/components/util/data-util.service.js',
+        'scripts/components/util/sort.directive.js',
         'scripts/app/account/account.js',
         'scripts/app/account/activate/activate.js',
         'scripts/app/account/activate/activate.controller.js',
@@ -1156,6 +1178,7 @@ JhipsterGenerator.prototype.app = function app() {
         'scripts/app/admin/metrics/metrics.modal.controller.js',
         'scripts/app/admin/user-management/user-management-detail.controller.js',
         'scripts/app/admin/user-management/user-management-dialog.controller.js',
+        'scripts/app/admin/user-management/user-management-delete-dialog.controller.js',
         'scripts/app/admin/user-management/user-management.controller.js',
         'scripts/app/admin/user-management/user-management.js',
         'scripts/app/entities/entity.js',

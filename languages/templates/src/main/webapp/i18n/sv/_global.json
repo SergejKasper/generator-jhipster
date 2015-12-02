@@ -105,9 +105,12 @@
         }
     },
     "error": {
-        "serverNotReachable": "Server not reachable",
-        "NotNull": "Field {{fieldName}} cannot be empty!",
-        "Size": "Field {{fieldName}} does not meet min/max size requirements!"
+        "server.not.reachable": "Servern kan inte nås",
+        "NotNull": "Fält {{fieldName}} kan inte vara tomt!",
+        "Size": "Fält {{fieldName}} uppfyller inte min/max-storlekskravet!",
+        "userexists": "Login name already used!",
+        "emailexists": "E-mail is already in use!",
+        "idexists": "A new {{entityName}} cannot already have an ID"
     },
     "footer": "Detta är din footer"
 }
