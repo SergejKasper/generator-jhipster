@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('<%=angularAppName%>')
-    .controller('LoginController', function ($rootScope, $scope, $state, $timeout, Auth) {
+    .controller('LoginController', function ($rootScope, $scope, $state, $timeout, Auth, $uibModalInstance) {
         $scope.credentials = {
             username: null,
             password: null,
@@ -18,13 +18,26 @@ angular.module('<%=angularAppName%>')
                 rememberMe: $scope.credentials.rememberMe
             }).then(function () {
                 $scope.authenticationError = false;
-                if ($rootScope.previousStateName === 'register') {
-                    $state.go('home');
+                if($uibModalInstance){
+                  $uibModalInstance.close();
                 } else {
-                    $rootScope.back();
+                  if ($rootScope.previousStateName === 'register') {
+                      $state.go('home');
+                  } else {
+                      $rootScope.back();
+                  }
                 }
             }).catch(function () {
                 $scope.authenticationError = true;
             });
+        };
+        $scope.cancel = function () {
+          $scope.credentials = {
+              username: null,
+              password: null,
+              rememberMe: true
+          };
+          $scope.authenticationError = false;
+          $uibModalInstance.dismiss('cancel');
         };
     });

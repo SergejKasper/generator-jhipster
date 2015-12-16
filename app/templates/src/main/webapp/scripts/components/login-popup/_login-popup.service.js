@@ -15,7 +15,7 @@ angular.module('<%=angularAppName%>')
                 var modalInstance = $uibModal.open({
                     animation: true,
                     templateUrl: 'scripts/components/login-popup/login-popup.html',
-                    controller: 'LoginPopupController'<% if (enableTranslation) { %>,
+                    controller: 'LoginController'<% if (enableTranslation) { %>,
                     resolve: {
                       translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                           $translatePartialLoader.addPart('login');

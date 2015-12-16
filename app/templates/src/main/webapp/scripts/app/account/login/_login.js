@@ -7,7 +7,7 @@ angular.module('<%=angularAppName%>')
                 parent: 'account',
                 url: '/login',
                 data: {
-                    authorities: [], 
+                    authorities: [],
                     pageTitle: 'login.title'
                 },
                 views: {
@@ -20,6 +20,9 @@ angular.module('<%=angularAppName%>')
                     translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                         $translatePartialLoader.addPart('login');
                         return $translate.refresh();
+                    }],
+                    $uibModalInstance: [function(){
+                        return false;
                     }]
                 }
             });

@@ -950,7 +950,6 @@ JhipsterGenerator.prototype.app = function app() {
     this.template(webappDir + '/scripts/components/auth/services/_register.service.js', webappDir + 'scripts/components/auth/services/register.service.js', this, {});
     if (this.authenticationType == 'session') {
         this.template(webappDir + '/scripts/components/auth/services/_sessions.service.js', webappDir + 'scripts/components/auth/services/sessions.service.js', this, {});
-        this.template(webappDir + '/scripts/components/login-popup/_login-popup.controller.js', webappDir + 'scripts/components/login-popup/login-popup.controller.js', this, {});
         this.template(webappDir + '/scripts/components/login-popup/_login-popup.service.js', webappDir + 'scripts/components/login-popup/login-popup.service.js', this, {});
         this.copyHtml(webappDir + '/scripts/components/login-popup/login-popup.html', webappDir + 'scripts/components/login-popup/login-popup.html');
     }
